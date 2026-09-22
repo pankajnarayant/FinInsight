@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
+import PhoneFrame from '../components/PhoneFrame';
+import { useFinInsight } from '../context/FinInsightContext';
 
 /* ─────────────────────────────────────────────
    Inline SVG Icons
@@ -58,31 +60,6 @@ const ChartIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
   </svg>
 );
-const HomeNavIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-  </svg>
-);
-const ScanIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-  </svg>
-);
-const HistoryIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const ServicesNavIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-  </svg>
-);
-const PlusIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-  </svg>
-);
 const ShieldTinyIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -103,6 +80,56 @@ function Toast({ message, visible }) {
       animation: 'fadeIn 0.2s ease',
     }}>
       {message}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Service Card Component with Hover State
+───────────────────────────────────────────── */
+function ServiceCard({ icon: Icon, title, description, onClick }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        background: '#fff',
+        border: isHovered ? '1.5px solid #00A8FF' : '1px solid #E3ECF5',
+        borderRadius: 18,
+        padding: '14px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'pointer',
+        boxShadow: isHovered ? '0 4px 18px rgba(0,168,255,0.18)' : '0 2px 8px rgba(0,0,0,0.04)',
+        transform: isHovered ? 'translateY(-1px)' : 'none',
+        transition: 'all 0.2s ease',
+      }}
+    >
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 13,
+        background: isHovered ? 'linear-gradient(135deg, #00A8FF, #0080CC)' : '#EEF4FB',
+        display: 'flex',
+        alignItems: 'center',
+        justify: 'center',
+        color: isHovered ? '#fff' : '#00A8FF',
+        flexShrink: 0,
+        transition: 'all 0.2s ease',
+      }}>
+        <Icon />
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#172B4D' }}>{title}</div>
+        <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 2, lineHeight: 1.4 }}>{description}</div>
+      </div>
+      <div style={{ color: isHovered ? '#00A8FF' : '#B0C4D8', flexShrink: 0, transition: 'color 0.2s ease' }}>
+        <ChevronRight />
+      </div>
     </div>
   );
 }
@@ -203,7 +230,7 @@ function AppContent({ showToast }) {
 
         {/* Quick-action chips */}
         <div style={{ overflowX: 'auto', padding: '0 14px 12px', display: 'flex', gap: 8, scrollbarWidth: 'none' }}>
-          {['Personal Loan', 'Home Loan', 'Car Loan', 'Credit Card', 'Mutual Fund', 'Fixed Deposit'].map((chip) => (
+          {['Personal Loan', 'Home Loan', 'Car Loan', 'Health Insurance', 'Term Insurance', 'Credit Card'].map((chip) => (
             <div key={chip} onClick={() => handleSelectNeed(chip)} style={{ whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: 999, background: '#EEF4FB', border: '1px solid #D0E8FB', fontSize: 11, fontWeight: 600, color: '#004AAD', cursor: 'pointer', flexShrink: 0 }}>
               {chip}
             </div>
@@ -212,42 +239,24 @@ function AppContent({ showToast }) {
 
         {/* Service Cards */}
         <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          {/* Primary card — Loan */}
-          <div onClick={() => handleSelectNeed('Personal Loan')} style={{ background: '#fff', border: '1.5px solid #00A8FF', borderRadius: 18, padding: '14px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', boxShadow: '0 4px 18px rgba(0,168,255,0.13)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 13, background: 'linear-gradient(135deg, #00A8FF, #0080CC)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
-              <LoanIcon />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#002970' }}>I need a Loan</div>
-              <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 2, lineHeight: 1.4 }}>Understand your options, costs and eligibility.</div>
-            </div>
-            <div style={{ color: '#00A8FF', flexShrink: 0 }}><ChevronRight /></div>
-          </div>
-
-          {/* Insurance */}
-          <div onClick={() => handleSelectNeed('Health Insurance')} style={{ background: '#fff', border: '1px solid #E3ECF5', borderRadius: 18, padding: '14px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 13, background: '#EEF4FB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00A8FF', flexShrink: 0 }}>
-              <ShieldIcon />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#172B4D' }}>I need Insurance</div>
-              <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 2, lineHeight: 1.4 }}>Understand coverage and find the right plan.</div>
-            </div>
-            <div style={{ color: '#B0C4D8', flexShrink: 0 }}><ChevronRight /></div>
-          </div>
-
-          {/* Other Services */}
-          <div onClick={() => handleSelectNeed('Financial Services')} style={{ background: '#fff', border: '1px solid #E3ECF5', borderRadius: 18, padding: '14px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 13, background: '#EEF4FB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00A8FF', flexShrink: 0 }}>
-              <ChartIcon />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#172B4D' }}>Explore other Financial Services</div>
-              <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 2, lineHeight: 1.4 }}>Investments, credit cards and more.</div>
-            </div>
-            <div style={{ color: '#B0C4D8', flexShrink: 0 }}><ChevronRight /></div>
-          </div>
+          <ServiceCard
+            icon={LoanIcon}
+            title="I need a Loan"
+            description="Understand your options, costs and eligibility."
+            onClick={() => handleSelectNeed('Personal Loan')}
+          />
+          <ServiceCard
+            icon={ShieldIcon}
+            title="I need Insurance"
+            description="Understand coverage and find the right plan."
+            onClick={() => handleSelectNeed('Health Insurance')}
+          />
+          <ServiceCard
+            icon={ChartIcon}
+            title="Explore other Financial Services"
+            description="Investments, credit cards and more."
+            onClick={() => handleSelectNeed('Financial Services')}
+          />
         </div>
 
         {/* Primary CTA */}
@@ -293,113 +302,16 @@ function AppContent({ showToast }) {
 
 export default function HomeScreen() {
   const [toast, setToast] = useState({ visible: false, message: '' });
-  const [scale, setScale] = useState(1);
-  const PHONE_W = 393;
-  const PHONE_H = 852;
-
-  useEffect(() => {
-    const compute = () => {
-      const scaleW = window.innerWidth / (PHONE_W + 20);
-      const scaleH = window.innerHeight / (PHONE_H + 20);
-      setScale(Math.min(scaleW, scaleH, 1)); // never upscale beyond 1
-    };
-    compute();
-    window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
-  }, []);
 
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: '' }), 2500);
   };
 
-  const now = new Date();
-  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
   return (
-    /* Full page dark background — nothing visible outside the phone */
-    <div style={{
-      width: '100vw', height: '100vh', overflow: 'hidden',
-      background: 'linear-gradient(160deg, #0d1117 0%, #161b26 50%, #0a1628 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Inter', -apple-system, sans-serif",
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { overflow: hidden; background: #0d1117; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-      `}</style>
-
-      {/* Scaled phone wrapper */}
-      <div style={{
-        width: PHONE_W,
-        height: PHONE_H,
-        flexShrink: 0,
-        transform: `scale(${scale})`,
-        transformOrigin: 'center center',
-      }}>
-        {/* Outer bezel */}
-        <div style={{
-          width: '100%', height: '100%',
-          background: '#1a1a1a',
-          borderRadius: 54,
-          boxShadow: '0 0 0 1px #3a3a3a, 0 0 0 2px #222, 0 40px 80px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5)',
-          padding: 5,
-          position: 'relative',
-        }}>
-          {/* Side buttons */}
-          <div style={{ position: 'absolute', left: -3, top: 140, width: 3, height: 32, background: '#2e2e2e', borderRadius: '3px 0 0 3px' }} />
-          <div style={{ position: 'absolute', left: -3, top: 188, width: 3, height: 58, background: '#2e2e2e', borderRadius: '3px 0 0 3px' }} />
-          <div style={{ position: 'absolute', left: -3, top: 256, width: 3, height: 58, background: '#2e2e2e', borderRadius: '3px 0 0 3px' }} />
-          <div style={{ position: 'absolute', right: -3, top: 200, width: 3, height: 80, background: '#2e2e2e', borderRadius: '0 3px 3px 0' }} />
-
-          {/* Screen glass */}
-          <div style={{ width: '100%', height: '100%', borderRadius: 50, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-
-            {/* Status bar */}
-            <div style={{ background: '#F5F8FC', padding: '10px 22px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#172B4D' }}>{timeStr}</span>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
-                  <rect x="0" y="7" width="3" height="4" rx="0.5" fill="#172B4D" />
-                  <rect x="4" y="4.5" width="3" height="6.5" rx="0.5" fill="#172B4D" />
-                  <rect x="8" y="2" width="3" height="9" rx="0.5" fill="#172B4D" />
-                  <rect x="12" y="0" width="3" height="11" rx="0.5" fill="#D0D8E4" />
-                </svg>
-                <svg width="15" height="11" viewBox="0 0 24 18" fill="none">
-                  <path d="M1 5.5C5.73 1.44 10.87 0 12 0s6.27 1.44 11 5.5" stroke="#172B4D" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M4 9.5C6.9 6.9 9.45 6 12 6s5.1.9 8 3.5" stroke="#172B4D" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M7.5 13c1.2-1.2 2.8-1.8 4.5-1.8s3.3.6 4.5 1.8" stroke="#172B4D" strokeWidth="2.5" strokeLinecap="round" />
-                  <circle cx="12" cy="17" r="1.5" fill="#172B4D" />
-                </svg>
-                <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
-                  <rect x="0.5" y="0.5" width="17" height="10" rx="2" stroke="#172B4D" />
-                  <rect x="1.5" y="1.5" width="13" height="8" rx="1.5" fill="#172B4D" />
-                  <path d="M18.5 3.5v4a2 2 0 000-4z" fill="#172B4D" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Dynamic Island */}
-            <div style={{ background: '#F5F8FC', display: 'flex', justifyContent: 'center', paddingBottom: 6, flexShrink: 0 }}>
-              <div style={{ width: 118, height: 30, background: '#111', borderRadius: 20 }} />
-            </div>
-
-            {/* App content */}
-            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              <AppContent showToast={showToast} />
-              <Toast message={toast.message} visible={toast.visible} />
-            </div>
-
-            {/* Home indicator */}
-            <div style={{ background: '#fff', height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <div style={{ width: 120, height: 4, background: '#111', borderRadius: 999 }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <>
+      <AppContent showToast={showToast} />
+      <Toast message={toast.message} visible={toast.visible} />
+    </>
   );
 }
-
