@@ -46,22 +46,22 @@ const ChevronRight = () => (
   </svg>
 );
 const LoanIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block' }}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
   </svg>
 );
 const ShieldIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block' }}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 );
 const ChartIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block' }}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
   </svg>
 );
 const ShieldTinyIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block' }}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
@@ -102,32 +102,38 @@ function ServiceCard({ icon: Icon, title, description, onClick }) {
         padding: '14px 14px',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 14,
         cursor: 'pointer',
-        boxShadow: isHovered ? '0 4px 18px rgba(0,168,255,0.18)' : '0 2px 8px rgba(0,0,0,0.04)',
-        transform: isHovered ? 'translateY(-1px)' : 'none',
-        transition: 'all 0.2s ease',
+        boxShadow: isHovered ? '0 6px 20px rgba(0, 168, 255, 0.15)' : '0 2px 8px rgba(0,0,0,0.04)',
+        transform: isHovered ? 'translateY(-2px)' : 'none',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       <div style={{
         width: 44,
         height: 44,
         borderRadius: 13,
-        background: isHovered ? 'linear-gradient(135deg, #00A8FF, #0080CC)' : '#EEF4FB',
+        background: isHovered ? 'linear-gradient(135deg, #00A8FF 0%, #0055CC 100%)' : '#EEF4FB',
         display: 'flex',
         alignItems: 'center',
-        justify: 'center',
-        color: isHovered ? '#fff' : '#00A8FF',
+        justifyContent: 'center',
+        color: isHovered ? '#ffffff' : '#00A8FF',
         flexShrink: 0,
-        transition: 'all 0.2s ease',
+        boxShadow: isHovered ? '0 4px 12px rgba(0, 168, 255, 0.3)' : 'none',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       }}>
         <Icon />
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#172B4D' }}>{title}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: isHovered ? '#002970' : '#172B4D', transition: 'color 0.2s ease' }}>{title}</div>
         <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 2, lineHeight: 1.4 }}>{description}</div>
       </div>
-      <div style={{ color: isHovered ? '#00A8FF' : '#B0C4D8', flexShrink: 0, transition: 'color 0.2s ease' }}>
+      <div style={{
+        color: isHovered ? '#00A8FF' : '#B0C4D8',
+        flexShrink: 0,
+        transform: isHovered ? 'translateX(3px)' : 'none',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
         <ChevronRight />
       </div>
     </div>
