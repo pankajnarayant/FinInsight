@@ -2,32 +2,54 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
+import HeroEmiCard from '../components/HeroEmiCard';
+import AffordabilityCard from '../components/AffordabilityCard';
+import SummaryCard from '../components/SummaryCard';
+import DetailsListCard from '../components/DetailsListCard';
 import { useFinInsight } from '../context/FinInsightContext';
-import { calculateEMI, formatINR } from '../utils/loanCalculations';
+import {
+  calculateEMI,
+  calculateTotalRepayment,
+  calculateTotalInterest,
+  calculateAffordability,
+  formatINR,
+} from '../utils/loanCalculations';
+
+const ArrowRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+  </svg>
+);
 
 export default function ChatScreen() {
   const navigate = useNavigate();
   const context = useFinInsight();
 
-  // Retrieve context setters & getters
-  const selectedGoal = context?.selectedGoal || 'Personal Loan';
-  const needAmount = context?.needAmount || 200000;
-  const tenureMonths = context?.tenureMonths || 24;
-  const existingEmi = context?.existingEmi || 8200;
+  // Retrieve initial values from context or fallbacks
+  const defaultPurpose = context?.selectedGoal || 'Education Loan';
+  const defaultAmount = Number(context?.needAmount) || 200000;
+  const defaultTenure = Number(context?.tenureMonths) || 24;
+  const existingEmi = Number(context?.existingEmi) || 8200;
 
-  // Local chat step state
-  const [chatStep, setChatStep] = useState(1); // 1: Purpose, 2: Amount, 3: Tenure, 4: Prompt for calculation
-  const [localPurpose, setLocalPurpose] = useState(selectedGoal);
-  const [localAmount, setLocalAmount] = useState(needAmount);
-  const [localTenure, setLocalTenure] = useState(tenureMonths);
-  const [showInChatSummary, setShowInChatSummary] = useState(false);
+  // Step state: 1 = Purpose selection, 2 = Amount selection, 3 = Tenure selection, 4 = Finalized
+  const [chatStep, setChatStep] = useState(1);
+  const [capturedPurpose, setCapturedPurpose] = useState(defaultPurpose);
+  const [capturedAmount, setCapturedAmount] = useState(defaultAmount);
+  const [capturedTenure, setCapturedTenure] = useState(defaultTenure);
+
+  // Calculation readiness & typing indicator states
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isPlanReady, setIsPlanReady] = useState(false);
+  const [monthlyIncome, setMonthlyIncome] = useState(35000);
 
   const chatEndRef = useRef(null);
 
+  // Auto-scroll chat stream to bottom whenever steps or plan readiness update
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatStep, showInChatSummary]);
+  }, [chatStep, isCalculating, isPlanReady, monthlyIncome]);
 
+  // Mobile phone scaling calculation for desktop presentation frame
   const [scale, setScale] = useState(1);
   const PHONE_W = 393;
   const PHONE_H = 852;
@@ -44,25 +66,40 @@ export default function ChatScreen() {
     return () => window.removeEventListener('resize', computeScale);
   }, []);
 
+  // Handler when Purpose is selected
   const handleSelectPurpose = (p) => {
-    setLocalPurpose(p);
+    setCapturedPurpose(p);
     if (context?.setSelectedGoal) context.setSelectedGoal(p);
     setChatStep(2);
   };
 
+  // Handler when Amount is selected
   const handleSelectAmount = (amt) => {
-    setLocalAmount(amt);
+    setCapturedAmount(amt);
     if (context?.setNeedAmount) context.setNeedAmount(amt);
     setChatStep(3);
   };
 
-  const handleSelectTenure = (t) => {
-    setLocalTenure(t);
-    if (context?.setTenureMonths) context.setTenureMonths(t);
+  // Handler when Tenure is selected -> triggers instant calculation & inline plan display
+  const handleSelectTenure = (tenureVal) => {
+    setCapturedTenure(tenureVal);
+    if (context?.setTenureMonths) context.setTenureMonths(tenureVal);
     setChatStep(4);
+
+    // Show brief typing indicator delay (750ms), then render full inline plan card
+    setIsCalculating(true);
+    setTimeout(() => {
+      setIsCalculating(false);
+      setIsPlanReady(true);
+    }, 750);
   };
 
-  const currentEmi = calculateEMI(localAmount, 14, localTenure);
+  // Compute dynamic live numbers using loanCalculations.js
+  const interestRate = 14;
+  const computedEmi = calculateEMI(capturedAmount, interestRate, capturedTenure);
+  const computedTotalRepayment = calculateTotalRepayment(computedEmi, capturedTenure);
+  const computedTotalInterest = calculateTotalInterest(computedTotalRepayment, capturedAmount);
+  const computedAffordability = calculateAffordability(computedEmi, existingEmi, monthlyIncome);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -87,24 +124,24 @@ export default function ChatScreen() {
 
             <TopAppBar />
 
-            {/* AI Assistant Chat Stream */}
+            {/* AI Conversation Scroll Body */}
             <div style={{ flex: 1, padding: 14, overflowY: 'auto', background: '#F5F8FC', fontFamily: font, display: 'flex', flexDirection: 'column', gap: 12 }}>
               
-              <div style={{ fontSize: 11, textAlign: 'center', color: '#8A99AD', margin: '2px 0' }}>AI Financial Assistant</div>
+              <div style={{ fontSize: 11, textAlign: 'center', color: '#8A99AD', margin: '2px 0' }}>FinInsight AI Assistant</div>
 
               {/* Step 1: Initial AI Greeting */}
               <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
-                Hello Rahul 👋 I'm your FinInsight AI assistant. Let's personalize your financial decision!
+                Hello Rahul 👋 I'm your AI financial assistant. Let's personalize your plan!
               </div>
 
               <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
-                What is your primary borrowing goal or financial requirement?
+                What is your primary borrowing goal or requirement?
               </div>
 
-              {/* Purpose choices if step >= 1 */}
+              {/* Step 1 Purpose Choices */}
               {chatStep === 1 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '4px 0' }}>
-                  {['Personal Loan', 'Education Loan', 'Business', 'Home Improvement', 'Medical Emergency'].map((p) => (
+                  {['Education Loan', 'Personal Loan', 'Business Loan', 'Home Improvement', 'Medical Emergency'].map((p) => (
                     <button
                       key={p}
                       onClick={() => handleSelectPurpose(p)}
@@ -116,20 +153,21 @@ export default function ChatScreen() {
                 </div>
               )}
 
-              {/* User selected Purpose */}
+              {/* Display User Selection for Step 1 */}
               {chatStep > 1 && (
                 <div style={{ alignSelf: 'flex-end', background: '#002970', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '8px 14px', maxWidth: '80%', fontSize: 13, fontWeight: 600 }}>
-                  Selected Goal: {localPurpose}
+                  Goal: {capturedPurpose}
                 </div>
               )}
 
               {/* Step 2: Amount Prompt */}
               {chatStep >= 2 && (
                 <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
-                  Got it! What loan amount do you require for <strong>{localPurpose}</strong>?
+                  Got it! What loan amount do you require for <strong>{capturedPurpose}</strong>?
                 </div>
               )}
 
+              {/* Step 2 Amount Choices */}
               {chatStep === 2 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '4px 0' }}>
                   {[100000, 200000, 240000, 350000, 500000].map((amt) => (
@@ -144,9 +182,10 @@ export default function ChatScreen() {
                 </div>
               )}
 
+              {/* Display User Selection for Step 2 */}
               {chatStep > 2 && (
                 <div style={{ alignSelf: 'flex-end', background: '#00A8FF', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '8px 14px', maxWidth: '80%', fontSize: 13, fontWeight: 600 }}>
-                  Amount: {formatINR(localAmount)}
+                  Amount: {formatINR(capturedAmount)}
                 </div>
               )}
 
@@ -157,6 +196,7 @@ export default function ChatScreen() {
                 </div>
               )}
 
+              {/* Step 3 Tenure Choices */}
               {chatStep === 3 && (
                 <div style={{ display: 'flex', gap: 8, margin: '4px 0' }}>
                   {[12, 24, 36, 48].map((t) => (
@@ -171,117 +211,93 @@ export default function ChatScreen() {
                 </div>
               )}
 
+              {/* Display User Selection for Step 3 */}
               {chatStep > 3 && (
                 <div style={{ alignSelf: 'flex-end', background: '#002970', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '8px 14px', maxWidth: '80%', fontSize: 13, fontWeight: 600 }}>
-                  Tenure: {localTenure} Months
+                  Tenure: {capturedTenure} Months
                 </div>
               )}
 
-              {/* Step 4: AI Asks User Before Opening Financial Calculation Plan */}
-              {chatStep >= 4 && (
+              {/* Typing Indicator Bubble during calculation */}
+              {isCalculating && (
+                <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', border: '1px solid #E8EFF7', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0s' }} />
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.2s' }} />
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.4s' }} />
+                  </div>
+                  <span style={{ fontSize: 12, color: '#5F6B7A', fontWeight: 500 }}>Calculating your personalized plan...</span>
+                </div>
+              )}
+
+              {/* AUTOMATIC INLINE FINANCIAL PLAN CARD RENDERED DIRECTLY INSIDE CHAT */}
+              {isPlanReady && (
                 <>
-                  <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
-                    Thank you! I have captured all your details for <strong>{localPurpose}</strong> ({formatINR(localAmount)} over {localTenure} months).
+                  <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '90%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
+                    🎉 Here is your complete calculated <strong>Financial Plan & EMI Breakdown</strong> for <strong>{capturedPurpose}</strong> ({formatINR(capturedAmount)} over {capturedTenure} months):
                   </div>
 
-                  <div style={{ alignSelf: 'flex-start', background: '#EEF8FF', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #BAE6FD', fontSize: 13, color: '#004AAD', lineHeight: 1.45, fontWeight: 600 }}>
-                    💡 Would you like to view your complete calculated Financial Plan and combined EMI burden breakdown now?
-                  </div>
+                  {/* RICH INLINE CALCULATION CONTAINER */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', margin: '4px 0' }}>
+                    
+                    {/* 1. HERO EMI CARD */}
+                    <HeroEmiCard
+                      emi={computedEmi}
+                      amount={capturedAmount}
+                      tenure={capturedTenure}
+                      interestRate={interestRate}
+                    />
 
-                  {/* Primary Interactive Options before going to detail breakdown */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '4px 0' }}>
+                    {/* 2. COMBINED BURDEN & AFFORDABILITY CARD */}
+                    <AffordabilityCard
+                      newEmi={computedEmi}
+                      existingEmi={existingEmi}
+                      affordability={computedAffordability}
+                      monthlyIncome={monthlyIncome}
+                      onIncomeChange={setMonthlyIncome}
+                    />
+
+                    {/* 3. PLAIN-LANGUAGE SUMMARY CARD */}
+                    <SummaryCard
+                      totalRepayment={computedTotalRepayment}
+                      tenure={capturedTenure}
+                      totalInterest={computedTotalInterest}
+                    />
+
+                    {/* 4. EXPANDABLE DETAILS LIST CARD */}
+                    <DetailsListCard
+                      interestRate={interestRate}
+                      processingFee={2000}
+                      tenure={capturedTenure}
+                      totalInterest={computedTotalInterest}
+                    />
+
+                    {/* 5. PRIMARY CTA BUTTON TO ROUTE TO OFFERS (SCREEN 4) */}
                     <button
-                      onClick={() => navigate('/plan')}
+                      onClick={() => navigate('/offers')}
                       style={{
                         width: '100%',
                         background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
-                        color: '#fff',
+                        color: '#ffffff',
                         border: 'none',
                         borderRadius: 14,
-                        padding: '13px 16px',
+                        padding: '14px 20px',
+                        fontSize: 15,
                         fontWeight: 700,
-                        fontSize: 14,
-                        cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justify: 'center',
                         gap: 8,
-                        boxShadow: '0 4px 14px rgba(0,41,112,0.25)',
-                      }}
-                    >
-                      <span>View Personalized Financial Plan & EMI Breakdown</span>
-                      <span>→</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowInChatSummary(!showInChatSummary)}
-                      style={{
-                        width: '100%',
-                        background: '#ffffff',
-                        color: '#002970',
-                        border: '1px solid #CBD5E1',
-                        borderRadius: 12,
-                        padding: '10px 14px',
-                        fontWeight: 600,
-                        fontSize: 12,
                         cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(0, 41, 112, 0.25)',
+                        transition: 'transform 0.1s ease',
+                        marginTop: 4,
                       }}
                     >
-                      {showInChatSummary ? 'Hide Captured Details' : 'Show Captured Details'}
+                      <span>See loan offers</span>
+                      <ArrowRightIcon />
                     </button>
                   </div>
-
-                  {/* Inline Captured Data Section when requested */}
-                  {showInChatSummary && (
-                    <div style={{ background: '#ffffff', borderRadius: 16, padding: 14, border: '1px solid #E2E8F0', marginTop: 4, fontFamily: font }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: '#002970', marginBottom: 10 }}>Captured Requirement Summary</div>
-                      
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Borrowing Purpose:</span>
-                          <strong style={{ color: '#002970' }}>{localPurpose}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Target Amount:</span>
-                          <strong style={{ color: '#00A8FF' }}>{formatINR(localAmount)}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Comfortable New EMI:</span>
-                          <strong style={{ color: '#002970' }}>{formatINR(currentEmi)}/month</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Repayment Tenure:</span>
-                          <strong style={{ color: '#002970' }}>{localTenure} months</strong>
-                        </div>
-                        <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: 6, marginTop: 2, display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Credit Score:</span>
-                          <strong style={{ color: '#16A34A' }}>742 (Good)</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                          <span>Existing Monthly EMI:</span>
-                          <strong style={{ color: '#002970' }}>{formatINR(existingEmi)}/month</strong>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => navigate('/plan')}
-                        style={{
-                          width: '100%',
-                          background: '#00A8FF',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 10,
-                          padding: '10px',
-                          fontWeight: 700,
-                          fontSize: 13,
-                          cursor: 'pointer',
-                          marginTop: 12,
-                        }}
-                      >
-                        Open Full Financial Calculation Plan →
-                      </button>
-                    </div>
-                  )}
                 </>
               )}
 
