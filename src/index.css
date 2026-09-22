@@ -1,20 +1,16 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* FinInsight style utilities */
+/* Paytm style utilities */
 @layer utilities {
   .app-bar {
-    display: flex;
-    align-items: center;
-    background-color: #002970;
-    color: white;
-    padding: 1rem;
+    @apply flex items-center bg-paytmDeepBlue text-white p-4;
   }
   .app-title {
-    font-size: 1.25rem;
-    font-weight: 700;
+    @apply text-xl font-bold;
   }
   .app-tagline {
-    font-size: 0.875rem;
-    opacity: 0.9;
+    @apply text-sm opacity-90;
   }
 }

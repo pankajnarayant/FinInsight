@@ -1,27 +1,23 @@
 import React from 'react';
-import { FinInsightProvider, useFinInsight } from './context/FinInsightContext';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { FinInsightProvider } from './context/FinInsightContext';
 import HomeScreen from './pages/HomeScreen';
 import ChatScreen from './pages/ChatScreen';
 import PlanScreen from './pages/PlanScreen';
-
-function AppRoutes() {
-  const { currentRoute } = useFinInsight();
-
-  if (currentRoute === '/chat') {
-    return <ChatScreen />;
-  }
-
-  if (currentRoute === '/plan') {
-    return <PlanScreen />;
-  }
-
-  return <HomeScreen />;
-}
+import OffersScreen from './pages/OffersScreen';
 
 export default function App() {
   return (
     <FinInsightProvider>
-      <AppRoutes />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/home" element={<HomeScreen />} />
+          <Route path="/chat" element={<ChatScreen />} />
+          <Route path="/plan" element={<PlanScreen />} />
+          <Route path="/offers" element={<OffersScreen />} />
+        </Routes>
+      </BrowserRouter>
     </FinInsightProvider>
   );
 }
