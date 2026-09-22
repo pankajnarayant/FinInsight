@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paytm style utilities */
+@layer utilities {
+  .app-bar {
+    @apply flex items-center bg-paytmDeepBlue text-white p-4;
+  }
+  .app-title {
+    @apply text-xl font-bold;
+  }
+  .app-tagline {
+    @apply text-sm opacity-90;
+  }
+}
