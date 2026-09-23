@@ -34,7 +34,7 @@ const InfoCircleIcon = () => (
   </svg>
 );
 
-function InsuranceOfferCard({ offer, coverageAmount, onViewPlan }) {
+function InsuranceOfferCard({ offer, coverageAmount, onViewPlan, onApply }) {
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const monthlyPremium = Math.round(coverageAmount * offer.monthlyPremiumFactor);
   const annualPremium = monthlyPremium * 12;
@@ -186,7 +186,7 @@ function InsuranceOfferCard({ offer, coverageAmount, onViewPlan }) {
           View Plan
         </button>
         <button
-          onClick={() => onViewPlan(offer)}
+          onClick={() => onApply(offer)}
           style={{
             flex: 1,
             background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
@@ -227,7 +227,17 @@ export default function InsuranceOffersScreen() {
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
   const handleViewPlan = (offer) => {
-    setToastMsg(`Demo: This would proceed to ${offer.providerName}'s application on Paytm.`);
+    if (context?.setSelectedOffer) {
+      context.setSelectedOffer(offer);
+    }
+    navigate(`/insurance-offers/${offer.id}`);
+  };
+
+  const handleApply = (offer) => {
+    if (context?.setSelectedOffer) {
+      context.setSelectedOffer(offer);
+    }
+    setToastMsg(`This would hand off to ${offer.providerName}'s application flow on Paytm.`);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   };
@@ -348,6 +358,7 @@ export default function InsuranceOffersScreen() {
               offer={offer}
               coverageAmount={coverageAmount}
               onViewPlan={handleViewPlan}
+              onApply={handleApply}
             />
           ))}
         </div>

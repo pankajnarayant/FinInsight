@@ -37,7 +37,7 @@ const InfoCircleIcon = () => (
   </svg>
 );
 
-function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
+function LoanOfferCard({ offer, principal, tenure, onViewOffer, onApply }) {
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const effectiveTenure = offer.tenureMonths || tenure;
   const emi = calculateEMI(principal, offer.interestRate, effectiveTenure);
@@ -195,7 +195,7 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
           View Offer
         </button>
         <button
-          onClick={() => onViewOffer(offer)}
+          onClick={() => onApply(offer)}
           style={{
             flex: 1,
             background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
@@ -235,6 +235,13 @@ export default function OffersScreen() {
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
   const handleViewOffer = (offer) => {
+    if (context?.setSelectedOffer) {
+      context.setSelectedOffer(offer);
+    }
+    navigate(`/offers/${offer.id}`);
+  };
+
+  const handleApply = (offer) => {
     if (context?.setSelectedOffer) {
       context.setSelectedOffer(offer);
     }
@@ -358,6 +365,7 @@ export default function OffersScreen() {
               principal={userPrincipal}
               tenure={userTenure}
               onViewOffer={handleViewOffer}
+              onApply={handleApply}
             />
           ))}
         </div>
