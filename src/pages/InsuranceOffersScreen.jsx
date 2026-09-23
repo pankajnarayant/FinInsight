@@ -1,14 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
-import { loanOffers } from '../data/loanOffers';
+import { insuranceOffers } from '../data/insuranceOffers';
 import { useFinInsight } from '../context/FinInsightContext';
-import {
-  calculateEMI,
-  calculateTotalRepayment,
-  formatINR,
-} from '../utils/loanCalculations';
+import { formatINR } from '../utils/loanCalculations';
 
 const ArrowLeftIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -23,9 +19,10 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-const BankIcon = () => (
+const ShieldIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#004AAD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-    <path d="M3 21h18M3 10h18M5 10v7M9 10v7M15 10v7M19 10v7M12 3L2 8h20L12 3z" fill="#00A8FF" fillOpacity="0.2" />
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="#00A8FF" fillOpacity="0.2" />
+    <path d="M9 12l2 2 4-4" strokeWidth="2.5" />
   </svg>
 );
 
@@ -37,12 +34,10 @@ const InfoCircleIcon = () => (
   </svg>
 );
 
-function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
+function InsuranceOfferCard({ offer, coverageAmount, onViewPlan }) {
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const effectiveTenure = offer.tenureMonths || tenure;
-  const emi = calculateEMI(principal, offer.interestRate, effectiveTenure);
-  const totalRepayment = calculateTotalRepayment(emi, effectiveTenure);
-  const processingFee = Math.round((principal * offer.processingFeePercent) / 100);
+  const monthlyPremium = Math.round(coverageAmount * offer.monthlyPremiumFactor);
+  const annualPremium = monthlyPremium * 12;
 
   return (
     <div
@@ -60,7 +55,7 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
         boxSizing: 'border-box',
       }}
     >
-      {/* Header: lender name + type */}
+      {/* Header: Provider name + type */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div
           style={{
@@ -75,22 +70,22 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
             flexShrink: 0,
           }}
         >
-          <BankIcon />
+          <ShieldIcon />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#002970', lineHeight: 1.2 }}>
-            {offer.lenderName}
+            {offer.providerName}
           </div>
           <div style={{ fontSize: 11, color: '#8A9BB0', fontWeight: 500, marginTop: 1 }}>
-            {offer.loanType}
+            {offer.insuranceType}
           </div>
         </div>
-        <div style={{ background: '#EEF4FB', borderRadius: 8, padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#004AAD', flexShrink: 0 }}>
-          {offer.interestRate}% p.a.
+        <div style={{ background: '#ECFDF5', borderRadius: 8, padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#16A34A', flexShrink: 0, border: '1px solid #A7F3D0' }}>
+          {offer.policyTerm}
         </div>
       </div>
 
-      {/* EMI Highlight Strip */}
+      {/* Premium Highlight Strip */}
       <div
         style={{
           background: 'linear-gradient(135deg, #F5F8FC 0%, #EEF4FB 100%)',
@@ -104,16 +99,16 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
       >
         <div>
           <div style={{ fontSize: 10, fontWeight: 600, color: '#5F6B7A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Estimated EMI
+            Est. Monthly Premium
           </div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#002970', lineHeight: 1.2, marginTop: 2 }}>
-            {formatINR(emi)}
+            {formatINR(monthlyPremium)}
             <span style={{ fontSize: 12, fontWeight: 600, color: '#5F6B7A', marginLeft: 2 }}>/mo</span>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: '#8A9BB0' }}>Interest Rate</div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#004AAD' }}>{offer.interestRate}% p.a.</div>
+          <div style={{ fontSize: 10, color: '#8A9BB0' }}>Annual Premium</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#004AAD' }}>{formatINR(annualPremium)}</div>
         </div>
       </div>
 
@@ -131,20 +126,16 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
         }}
       >
         <div>
-          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Loan Amount</div>
-          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{formatINR(principal)}</div>
+          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Coverage Amount</div>
+          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{formatINR(coverageAmount)}</div>
         </div>
         <div>
-          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Tenure</div>
-          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{effectiveTenure} Months</div>
+          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Policy Term</div>
+          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{offer.policyTerm}</div>
         </div>
-        <div>
-          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Processing Fee</div>
-          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{formatINR(processingFee)} ({offer.processingFeePercent}%)</div>
-        </div>
-        <div>
-          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Total Repayment</div>
-          <div style={{ fontWeight: 700, color: '#172B4D', marginTop: 1 }}>{formatINR(totalRepayment)}</div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ color: '#8A9BB0', fontSize: 10 }}>Key Benefit</div>
+          <div style={{ fontWeight: 600, color: '#172B4D', marginTop: 1, lineHeight: 1.4 }}>{offer.keyBenefit}</div>
         </div>
       </div>
 
@@ -173,7 +164,7 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
       {/* Buttons Row */}
       <div style={{ display: 'flex', gap: 8 }}>
         <button
-          onClick={() => onViewOffer(offer)}
+          onClick={() => onViewPlan(offer)}
           style={{
             flex: 1,
             background: '#EEF4FB',
@@ -192,10 +183,10 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
             gap: 6,
           }}
         >
-          View Offer
+          View Plan
         </button>
         <button
-          onClick={() => onViewOffer(offer)}
+          onClick={() => onViewPlan(offer)}
           style={{
             flex: 1,
             background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
@@ -225,20 +216,20 @@ function LoanOfferCard({ offer, principal, tenure, onViewOffer }) {
   );
 }
 
-export default function OffersScreen() {
+export default function InsuranceOffersScreen() {
   const navigate = useNavigate();
   const context = useFinInsight();
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
-  const userPrincipal = Number(context?.needAmount) || 200000;
-  const userTenure = Number(context?.tenureMonths) || 24;
-  const selectedGoal = context?.selectedGoal || 'Personal Loan';
+  const coverageAmount = Number(context?.needAmount) || 500000;
+  const selectedGoal = context?.selectedGoal || 'Health Insurance';
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-  const handleViewOffer = (offer) => {
-    if (context?.setSelectedOffer) {
-      context.setSelectedOffer(offer);
-    }
-    navigate('/journey');
+  const handleViewPlan = (offer) => {
+    setToastMsg(`Demo: This would proceed to ${offer.providerName}'s application on Paytm.`);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
   };
 
   return (
@@ -292,10 +283,10 @@ export default function OffersScreen() {
 
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: '#002970', lineHeight: 1.2 }}>
-            Loan Offers
+            Insurance Options
           </div>
           <div style={{ fontSize: 11, color: '#5F6B7A', marginTop: 1, fontWeight: 500 }}>
-            Options based on the financial details you provided
+            Options based on the information you provided
           </div>
         </div>
       </div>
@@ -330,34 +321,33 @@ export default function OffersScreen() {
               {selectedGoal}
             </div>
             <div style={{ fontSize: 20, fontWeight: 900, marginTop: 2 }}>
-              {formatINR(userPrincipal)}
+              {formatINR(coverageAmount)}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>Tenure</div>
-            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{userTenure} Months</div>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>Coverage</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>Sum Insured</div>
           </div>
         </div>
 
         {/* Offers count badge */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: '#002970' }}>
-            {loanOffers.length} Matching Offers
+            {insuranceOffers.length} Matching Plans
           </div>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '3px 10px', borderRadius: 999 }}>
-            Demo Offers
+            Demo Plans
           </span>
         </div>
 
-        {/* Lender Cards */}
+        {/* Insurance Provider Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-          {loanOffers.map((offer) => (
-            <LoanOfferCard
+          {insuranceOffers.map((offer) => (
+            <InsuranceOfferCard
               key={offer.id}
               offer={offer}
-              principal={userPrincipal}
-              tenure={userTenure}
-              onViewOffer={handleViewOffer}
+              coverageAmount={coverageAmount}
+              onViewPlan={handleViewPlan}
             />
           ))}
         </div>
@@ -372,9 +362,37 @@ export default function OffersScreen() {
             padding: '4px 8px 16px',
           }}
         >
-          Demo offers for illustration. Actual rates, eligibility and approval depend on the lender.
+          Demo plans for illustration. Actual premiums, coverage terms and eligibility depend on the insurer.
         </div>
       </div>
+
+      {/* Toast */}
+      {toastVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#002970',
+            color: '#fff',
+            padding: '12px 20px',
+            borderRadius: 16,
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 200,
+            whiteSpace: 'normal',
+            textAlign: 'center',
+            width: 'calc(100% - 32px)',
+            maxWidth: 440,
+            lineHeight: 1.4,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            fontFamily: font,
+          }}
+        >
+          {toastMsg}
+        </div>
+      )}
 
       <BottomNav />
     </>

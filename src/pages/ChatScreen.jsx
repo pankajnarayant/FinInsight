@@ -323,7 +323,7 @@ export default function ChatScreen() {
                 totalInterest={computedTotalInterest}
               />
 
-              {/* 5. PRE-APPROVED / MATCHING OFFERS CARD SECTION */}
+              {/* 5. MATCHING OFFERS SUMMARY CARD */}
               <div
                 style={{
                   background: '#ffffff',
@@ -338,22 +338,25 @@ export default function ChatScreen() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: '#002970', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🏦</span>
-                    <span>Pre-Approved / Matching Offers</span>
+                    <span>{isInsuranceMode ? '🛡️' : '🏦'}</span>
+                    <span>{isInsuranceMode ? 'Matching Insurance Plans' : 'Matching Loan Offers'}</span>
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#ECFDF5', padding: '2px 8px', borderRadius: 999, border: '1px solid #A7F3D0' }}>
-                    3 Offers Found
+                    4 {isInsuranceMode ? 'Plans' : 'Offers'} Found
                   </span>
                 </div>
 
                 <div style={{ fontSize: 11.5, color: '#5F6B7A', lineHeight: 1.45 }}>
-                  Based on your requested <strong>{formatINR(capturedAmount)}</strong> over <strong>{capturedTenure} months</strong>, 3 partner lenders match your criteria with rates starting from <strong>11.5% p.a.</strong>
+                  {isInsuranceMode
+                    ? <>Based on your requested coverage of <strong>{formatINR(capturedAmount)}</strong>, 4 insurance providers match your criteria.</>
+                    : <>Based on your requested <strong>{formatINR(capturedAmount)}</strong> over <strong>{capturedTenure} months</strong>, 4 lenders match your criteria with rates starting from <strong>11.5% p.a.</strong></>
+                  }
                 </div>
               </div>
 
-              {/* 6. PRIMARY CTA BUTTON TO ROUTE TO OFFERS (SCREEN 4) */}
+              {/* 6. PRIMARY CTA BUTTON — ROUTES TO OFFERS OR INSURANCE OFFERS */}
               <button
-                onClick={() => navigate('/offers')}
+                onClick={() => navigate(isInsuranceMode ? '/insurance-offers' : '/offers')}
                 style={{
                   width: '100%',
                   background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
@@ -373,7 +376,7 @@ export default function ChatScreen() {
                   marginTop: 4,
                 }}
               >
-                <span>See loan offers</span>
+                <span>{isInsuranceMode ? 'See Insurance Offers' : 'See Loan Offers'}</span>
                 <ArrowRightIcon />
               </button>
             </div>
