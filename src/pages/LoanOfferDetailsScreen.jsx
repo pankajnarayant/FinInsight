@@ -395,26 +395,6 @@ export default function LoanOfferDetailsScreen() {
           </div>
         )}
 
-        {/* 7. Important Prototype Disclaimer */}
-        <div
-          style={{
-            background: '#EEF4FB',
-            border: '1px solid #D0E8FB',
-            borderRadius: 14,
-            padding: 12,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 10,
-            fontSize: 11,
-            color: '#004AAD',
-            lineHeight: 1.45,
-          }}
-        >
-          <InfoIcon />
-          <div>
-            <strong>Important:</strong> Demo information for the FinInsight hackathon prototype. Actual interest rates, fees, eligibility, terms and approval are determined by {offer.lenderName}.
-          </div>
-        </div>
 
         {/* 8. Primary CTA Button */}
         <button
