@@ -5,6 +5,7 @@ import PhoneFrame from './components/PhoneFrame';
 import HomeScreen from './pages/HomeScreen';
 import ChatScreen from './pages/ChatScreen';
 import OffersScreen from './pages/OffersScreen';
+import JourneyScreen from './pages/JourneyScreen';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/home" element={<HomeScreen />} />
             <Route path="/chat" element={<ChatScreen />} />
             <Route path="/offers" element={<OffersScreen />} />
+            <Route path="/journey" element={<JourneyScreen />} />
           </Routes>
         </PhoneFrame>
       </BrowserRouter>

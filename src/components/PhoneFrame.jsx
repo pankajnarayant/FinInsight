@@ -93,7 +93,7 @@ export default function PhoneFrame({ children }) {
                 padding: '10px 22px 4px',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 flexShrink: 0,
               }}
             >

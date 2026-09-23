@@ -110,7 +110,7 @@ export default function AffordabilityCard({
         <div
           style={{
             display: 'flex',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             borderTop: '1px dashed #CBD5E1',
             paddingTop: 6,
             marginTop: 2,
@@ -163,7 +163,7 @@ export default function AffordabilityCard({
           paddingTop: 10,
           marginTop: 10,
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           fontSize: 12,
         }}

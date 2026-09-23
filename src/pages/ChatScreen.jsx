@@ -323,7 +323,35 @@ export default function ChatScreen() {
                 totalInterest={computedTotalInterest}
               />
 
-              {/* 5. PRIMARY CTA BUTTON TO ROUTE TO OFFERS (SCREEN 4) */}
+              {/* 5. PRE-APPROVED / MATCHING OFFERS CARD SECTION */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: 14,
+                  padding: 14,
+                  border: '1px solid #E8EFF7',
+                  boxShadow: '0 2px 8px rgba(0, 41, 112, 0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#002970', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🏦</span>
+                    <span>Pre-Approved / Matching Offers</span>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#ECFDF5', padding: '2px 8px', borderRadius: 999, border: '1px solid #A7F3D0' }}>
+                    3 Offers Found
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 11.5, color: '#5F6B7A', lineHeight: 1.45 }}>
+                  Based on your requested <strong>{formatINR(capturedAmount)}</strong> over <strong>{capturedTenure} months</strong>, 3 partner lenders match your criteria with rates starting from <strong>11.5% p.a.</strong>
+                </div>
+              </div>
+
+              {/* 6. PRIMARY CTA BUTTON TO ROUTE TO OFFERS (SCREEN 4) */}
               <button
                 onClick={() => navigate('/offers')}
                 style={{
@@ -337,7 +365,7 @@ export default function ChatScreen() {
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                   gap: 8,
                   cursor: 'pointer',
                   boxShadow: '0 4px 14px rgba(0, 41, 112, 0.25)',

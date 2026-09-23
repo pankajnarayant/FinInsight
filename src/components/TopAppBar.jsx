@@ -22,7 +22,7 @@ export default function TopAppBar({ onNotificationClick, onProfileClick }) {
       padding: '12px 18px 10px',
       display: 'flex',
       alignItems: 'center',
-      justify: 'space-between',
+      justifyContent: 'space-between',
       borderBottom: '1px solid #E8EFF7',
       flexShrink: 0
     }}>
@@ -62,7 +62,7 @@ export default function TopAppBar({ onNotificationClick, onProfileClick }) {
             height: 30,
             display: 'flex',
             alignItems: 'center',
-            justify: 'center',
+            justifyContent: 'center',
             color: '#002970',
             cursor: 'pointer'
           }}

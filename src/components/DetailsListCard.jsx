@@ -80,7 +80,7 @@ export default function DetailsListCard({ interestRate = 14, processingFee = 200
               <div
                 style={{
                   display: 'flex',
-                  justify: 'space-between',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                 }}
               >
@@ -98,7 +98,7 @@ export default function DetailsListCard({ interestRate = 14, processingFee = 200
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
-                      justify: 'center',
+                      justifyContent: 'center',
                       transition: 'all 0.15s ease',
                     }}
                   >

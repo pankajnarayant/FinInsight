@@ -11,6 +11,7 @@ export const FinInsightProvider = ({ children }) => {
   const [monthlyIncome, setMonthlyIncome] = useState(35000);
   const [userName, setUserName] = useState('Rahul Sharma');
   const [creditScore, setCreditScore] = useState(742);
+  const [selectedOffer, setSelectedOffer] = useState(null);
 
   const value = {
     selectedGoal,
@@ -29,6 +30,8 @@ export const FinInsightProvider = ({ children }) => {
     setUserName,
     creditScore,
     setCreditScore,
+    selectedOffer,
+    setSelectedOffer,
   };
 
   return (
