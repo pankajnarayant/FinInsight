@@ -86,26 +86,32 @@ export default function InsuranceOfferDetailsScreen() {
           title="Back to Offers"
           aria-label="Back to Offers"
           style={{
-            height: 34,
-            padding: '0 12px',
-            borderRadius: 18,
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
             background: '#EEF4FB',
             border: '1px solid #D0E8FB',
             color: '#002970',
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            justifyContent: 'center',
             cursor: 'pointer',
-            fontSize: 12,
-            fontWeight: 700,
-            fontFamily: font,
+            padding: 0,
+            lineHeight: 1,
             boxSizing: 'border-box',
             flexShrink: 0,
             transition: 'all 0.15s ease',
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#002970';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#EEF4FB';
+            e.currentTarget.style.color = '#002970';
+          }}
         >
           <ArrowLeftIcon />
-          <span>Back to Offers</span>
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
