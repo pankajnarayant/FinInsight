@@ -96,12 +96,10 @@ export default function ChatScreen() {
 
   // Firestore saving & loading state
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
 
   const handleSeeOffers = async () => {
     if (isSaving) return;
     setIsSaving(true);
-    setSaveError('');
 
     const journeyData = {
       selectedGoal,
@@ -118,12 +116,12 @@ export default function ChatScreen() {
 
     try {
       await saveFinancialJourney(journeyData);
-      navigate(isInsuranceMode ? '/insurance-offers' : '/offers');
     } catch (error) {
-      console.error("Error saving financial journey to Firestore:", error);
-      setSaveError("Failed to save financial journey. Please try again.");
-      setIsSaving(false);
+      console.error("Failed to save financial journey to Firestore:", error);
     }
+
+    // ALWAYS navigate after the save attempt whether it succeeds or fails
+    navigate(isInsuranceMode ? '/insurance-offers' : '/offers');
   };
 
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -386,12 +384,6 @@ export default function ChatScreen() {
                   }
                 </div>
               </div>
-
-              {saveError && (
-                <div style={{ fontSize: 12, color: '#DC2626', textAlign: 'center', marginTop: 4, fontWeight: 600 }}>
-                  {saveError}
-                </div>
-              )}
 
               {/* 6. PRIMARY CTA BUTTON — ROUTES TO OFFERS OR INSURANCE OFFERS */}
               <button
