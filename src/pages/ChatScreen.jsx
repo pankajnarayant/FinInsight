@@ -105,8 +105,11 @@ export default function ChatScreen() {
     const userMsgObj = { id: Date.now(), sender: 'user', text: trimmedText };
     setDynamicMessages((prev) => [...prev, userMsgObj]);
 
+    // Determine if AI is currently awaiting an answer to a financial question
+    const isAwaitingContext = chatStep > 1 || dynamicMessages.length > 0;
+
     // Check fast-path local response BEFORE showing loader or calling Sarvam AI
-    const fastPathReply = getFastPathResponse(trimmedText);
+    const fastPathReply = getFastPathResponse(trimmedText, isAwaitingContext);
     if (fastPathReply) {
       setDynamicMessages((prev) => [
         ...prev,
