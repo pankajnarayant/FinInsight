@@ -281,10 +281,10 @@ export default function ChatScreen() {
         </button>
 
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#002970' }}>FinInsight Sarvam AI Assistant</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#002970' }}>FinInsight AI Guide</div>
           <div style={{ fontSize: 9, color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontWeight: 600, marginTop: 1 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#16A34A' }} />
-            <span>sarvam-105b Active</span>
+            <span>Ready to help</span>
           </div>
         </div>
 
