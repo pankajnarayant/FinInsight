@@ -54,6 +54,7 @@ export default function ChatScreen() {
   // Calculation readiness & typing indicator states
   const [isCalculating, setIsCalculating] = useState(false);
   const [isPlanReady, setIsPlanReady] = useState(false);
+  const [planReadyTimestamp, setPlanReadyTimestamp] = useState(null);
   const [monthlyIncome, setMonthlyIncome] = useState(35000);
 
   // Dynamic Chat messages stream state
@@ -90,6 +91,7 @@ export default function ChatScreen() {
     setTimeout(() => {
       setIsCalculating(false);
       setIsPlanReady(true);
+      setPlanReadyTimestamp((prev) => prev || Date.now());
     }, 750);
   };
 
@@ -102,7 +104,8 @@ export default function ChatScreen() {
     setInputMessage('');
 
     // Append user message to dynamic conversation stream
-    const userMsgObj = { id: Date.now(), sender: 'user', text: trimmedText };
+    const now = Date.now();
+    const userMsgObj = { id: now, timestamp: now, sender: 'user', text: trimmedText };
     setDynamicMessages((prev) => [...prev, userMsgObj]);
 
     // Determine if AI is currently awaiting an answer to a financial question
@@ -111,9 +114,10 @@ export default function ChatScreen() {
     // Check fast-path local response BEFORE showing loader or calling Sarvam AI
     const fastPathReply = getFastPathResponse(trimmedText, isAwaitingContext);
     if (fastPathReply) {
+      const replyTime = Date.now() + 1;
       setDynamicMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, sender: 'assistant', text: fastPathReply },
+        { id: replyTime, timestamp: replyTime, sender: 'assistant', text: fastPathReply },
       ]);
       return;
     }
@@ -132,9 +136,10 @@ export default function ChatScreen() {
 
       if (res && res.reply) {
         // Append AI response bubble
+        const replyTime = Date.now() + 1;
         setDynamicMessages((prev) => [
           ...prev,
-          { id: Date.now() + 1, sender: 'assistant', text: res.reply },
+          { id: replyTime, timestamp: replyTime, sender: 'assistant', text: res.reply },
         ]);
       }
 
@@ -172,6 +177,7 @@ export default function ChatScreen() {
         if (res.isComplete || (hasAmount && hasTenure)) {
           setChatStep(4);
           setIsPlanReady(true);
+          setPlanReadyTimestamp((prev) => prev || Date.now());
         } else if (hasAmount) {
           setChatStep(3);
         } else if (purpose) {
@@ -180,10 +186,12 @@ export default function ChatScreen() {
       }
     } catch (err) {
       console.error('Sarvam AI call error:', err);
+      const errTime = Date.now() + 1;
       setDynamicMessages((prev) => [
         ...prev,
         {
-          id: Date.now() + 1,
+          id: errTime,
+          timestamp: errTime,
           sender: 'assistant',
           text: 'I encountered a temporary connection issue. You can continue using the options below or try typing again.',
         },
@@ -406,29 +414,31 @@ export default function ChatScreen() {
           </div>
         )}
 
-        {/* Render dynamic Sarvam AI conversation messages */}
-        {dynamicMessages.map((m) => (
-          <div
-            key={m.id}
-            style={{
-              alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
-              background: m.sender === 'user' ? '#002970' : '#ffffff',
-              color: m.sender === 'user' ? '#ffffff' : '#002970',
-              borderRadius: m.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              padding: '12px 14px',
-              maxWidth: '85%',
-              border: m.sender === 'user' ? 'none' : '1px solid #E8EFF7',
-              fontSize: 13,
-              lineHeight: 1.45,
-              fontWeight: m.sender === 'user' ? 600 : 400,
-            }}
-          >
-            {m.text}
-          </div>
-        ))}
+        {/* Render dynamic Sarvam AI conversation messages before plan generation */}
+        {dynamicMessages
+          .filter((m) => !planReadyTimestamp || m.timestamp <= planReadyTimestamp)
+          .map((m) => (
+            <div
+              key={m.id}
+              style={{
+                alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
+                background: m.sender === 'user' ? '#002970' : '#ffffff',
+                color: m.sender === 'user' ? '#ffffff' : '#002970',
+                borderRadius: m.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                padding: '12px 14px',
+                maxWidth: '85%',
+                border: m.sender === 'user' ? 'none' : '1px solid #E8EFF7',
+                fontSize: 13,
+                lineHeight: 1.45,
+                fontWeight: m.sender === 'user' ? 600 : 400,
+              }}
+            >
+              {m.text}
+            </div>
+          ))}
 
-        {/* Sarvam AI Typing Indicator */}
-        {isAiThinking && (
+        {/* Sarvam AI Typing Indicator (Before plan generation) */}
+        {isAiThinking && !planReadyTimestamp && (
           <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', border: '1px solid #E8EFF7', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', gap: 4 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0s' }} />
@@ -555,6 +565,41 @@ export default function ChatScreen() {
               </button>
             </div>
           </>
+        )}
+
+        {/* Render dynamic Sarvam AI conversation messages created AFTER financial plan card */}
+        {dynamicMessages
+          .filter((m) => planReadyTimestamp && m.timestamp > planReadyTimestamp)
+          .map((m) => (
+            <div
+              key={m.id}
+              style={{
+                alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
+                background: m.sender === 'user' ? '#002970' : '#ffffff',
+                color: m.sender === 'user' ? '#ffffff' : '#002970',
+                borderRadius: m.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                padding: '12px 14px',
+                maxWidth: '85%',
+                border: m.sender === 'user' ? 'none' : '1px solid #E8EFF7',
+                fontSize: 13,
+                lineHeight: 1.45,
+                fontWeight: m.sender === 'user' ? 600 : 400,
+              }}
+            >
+              {m.text}
+            </div>
+          ))}
+
+        {/* Sarvam AI Typing Indicator (After plan generation) */}
+        {isAiThinking && planReadyTimestamp && (
+          <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', border: '1px solid #E8EFF7', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0s' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.2s' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.4s' }} />
+            </div>
+            <span style={{ fontSize: 12, color: '#5F6B7A', fontWeight: 500 }}>Sarvam AI is analyzing your financial details...</span>
+          </div>
         )}
 
         <div ref={chatEndRef} />
