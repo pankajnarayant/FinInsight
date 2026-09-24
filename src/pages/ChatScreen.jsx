@@ -8,6 +8,7 @@ import AffordabilityCard from '../components/AffordabilityCard';
 import SummaryCard from '../components/SummaryCard';
 import DetailsListCard from '../components/DetailsListCard';
 import { useFinInsight } from '../context/FinInsightContext';
+import { saveFinancialJourney } from '../services/firestore';
 import {
   calculateEMI,
   calculateTotalRepayment,
@@ -92,6 +93,38 @@ export default function ChatScreen() {
   const computedTotalRepayment = calculateTotalRepayment(computedEmi, capturedTenure);
   const computedTotalInterest = calculateTotalInterest(computedTotalRepayment, capturedAmount);
   const computedAffordability = calculateAffordability(computedEmi, existingEmi, monthlyIncome);
+
+  // Firestore saving & loading state
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSeeOffers = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError('');
+
+    const journeyData = {
+      selectedGoal,
+      purpose: capturedPurpose,
+      isInsuranceMode,
+      requestedAmount: capturedAmount,
+      tenureMonths: capturedTenure,
+      monthlyIncome,
+      existingEmi,
+      computedEmi: isInsuranceMode ? null : computedEmi,
+      computedTotalRepayment: isInsuranceMode ? null : computedTotalRepayment,
+      computedTotalInterest: isInsuranceMode ? null : computedTotalInterest,
+    };
+
+    try {
+      await saveFinancialJourney(journeyData);
+      navigate(isInsuranceMode ? '/insurance-offers' : '/offers');
+    } catch (error) {
+      console.error("Error saving financial journey to Firestore:", error);
+      setSaveError("Failed to save financial journey. Please try again.");
+      setIsSaving(false);
+    }
+  };
 
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
@@ -354,12 +387,21 @@ export default function ChatScreen() {
                 </div>
               </div>
 
+              {saveError && (
+                <div style={{ fontSize: 12, color: '#DC2626', textAlign: 'center', marginTop: 4, fontWeight: 600 }}>
+                  {saveError}
+                </div>
+              )}
+
               {/* 6. PRIMARY CTA BUTTON — ROUTES TO OFFERS OR INSURANCE OFFERS */}
               <button
-                onClick={() => navigate(isInsuranceMode ? '/insurance-offers' : '/offers')}
+                onClick={handleSeeOffers}
+                disabled={isSaving}
                 style={{
                   width: '100%',
-                  background: 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
+                  background: isSaving
+                    ? '#8A9BB0'
+                    : 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: 14,
@@ -370,10 +412,11 @@ export default function ChatScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  cursor: 'pointer',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
                   boxShadow: '0 4px 14px rgba(0, 41, 112, 0.25)',
                   transition: 'transform 0.1s ease',
                   marginTop: 4,
+                  opacity: isSaving ? 0.7 : 1,
                 }}
               >
                 <span>{isInsuranceMode ? 'See Insurance Offers' : 'See Loan Offers'}</span>
