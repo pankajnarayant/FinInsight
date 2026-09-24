@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCaZlDtMsVcrmmPK9K836K4ocnu-RE1x84",
@@ -15,5 +16,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
+const functions = getFunctions(app, "us-central1");
 
-export { app, analytics, db };
+// Connect to Firebase Functions local emulator during development
+if (
+  import.meta.env.DEV ||
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+) {
+  connectFunctionsEmulator(functions, "127.0.0.1", 5005);
+}
+
+export { app, analytics, db, functions };

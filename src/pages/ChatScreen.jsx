@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
-import PhoneFrame from '../components/PhoneFrame';
 import HeroEmiCard from '../components/HeroEmiCard';
 import AffordabilityCard from '../components/AffordabilityCard';
 import SummaryCard from '../components/SummaryCard';
 import DetailsListCard from '../components/DetailsListCard';
 import { useFinInsight } from '../context/FinInsightContext';
 import { saveFinancialJourney } from '../services/firestore';
+import { analyzeFinancialMessage } from '../services/aiService';
 import {
   calculateEMI,
   calculateTotalRepayment,
@@ -55,14 +55,19 @@ export default function ChatScreen() {
   const [isPlanReady, setIsPlanReady] = useState(false);
   const [monthlyIncome, setMonthlyIncome] = useState(35000);
 
+  // Dynamic Chat messages stream state
+  const [dynamicMessages, setDynamicMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isAiThinking, setIsAiThinking] = useState(false);
+
   const chatEndRef = useRef(null);
 
-  // Auto-scroll chat stream to bottom whenever steps update
+  // Auto-scroll chat stream to bottom whenever messages or calculation state updates
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatStep, isCalculating, isPlanReady, monthlyIncome]);
+  }, [chatStep, isCalculating, isPlanReady, monthlyIncome, dynamicMessages, isAiThinking]);
 
-  // Handlers for selection
+  // Handlers for chip selection
   const handleSelectPurpose = (p) => {
     setCapturedPurpose(p);
     if (context?.setSelectedGoal) context.setSelectedGoal(p);
@@ -87,7 +92,93 @@ export default function ChatScreen() {
     }, 750);
   };
 
-  // Live Loan numbers calculation
+  // Handler for text input sending message to Sarvam AI Cloud Function
+  const handleSendMessage = async (textToSend) => {
+    const text = textToSend || inputMessage;
+    if (!text || !text.trim() || isAiThinking) return;
+
+    const trimmedText = text.trim();
+    setInputMessage('');
+
+    // Append user message to dynamic conversation stream
+    const userMsgObj = { id: Date.now(), sender: 'user', text: trimmedText };
+    setDynamicMessages((prev) => [...prev, userMsgObj]);
+    setIsAiThinking(true);
+
+    try {
+      // Build conversation history format for Sarvam AI
+      const history = dynamicMessages.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+
+      // Call Sarvam AI callable function
+      const res = await analyzeFinancialMessage(trimmedText, history);
+
+      if (res && res.reply) {
+        // Append AI response bubble
+        setDynamicMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'assistant', text: res.reply },
+        ]);
+      }
+
+      // Update state with extracted financial parameters
+      if (res && res.financialData) {
+        const { purpose, requestedAmount, tenureMonths, monthlyIncome: inc, existingEmi: exEmi } = res.financialData;
+
+        if (purpose) {
+          setCapturedPurpose(purpose);
+          if (context?.setSelectedGoal) context.setSelectedGoal(purpose);
+        }
+
+        if (typeof requestedAmount === 'number' && requestedAmount > 0) {
+          setCapturedAmount(requestedAmount);
+          if (context?.setNeedAmount) context.setNeedAmount(requestedAmount);
+        }
+
+        if (typeof tenureMonths === 'number' && tenureMonths > 0) {
+          setCapturedTenure(tenureMonths);
+          if (context?.setTenureMonths) context.setTenureMonths(tenureMonths);
+        }
+
+        if (typeof inc === 'number' && inc > 0) {
+          setMonthlyIncome(inc);
+        }
+
+        if (typeof exEmi === 'number' && exEmi >= 0 && context?.setExistingEmi) {
+          context.setExistingEmi(exEmi);
+        }
+
+        // Determine if essential requirements are present
+        const hasAmount = typeof requestedAmount === 'number' && requestedAmount > 0;
+        const hasTenure = typeof tenureMonths === 'number' && tenureMonths > 0;
+
+        if (res.isComplete || (hasAmount && hasTenure)) {
+          setChatStep(4);
+          setIsPlanReady(true);
+        } else if (hasAmount) {
+          setChatStep(3);
+        } else if (purpose) {
+          setChatStep(2);
+        }
+      }
+    } catch (err) {
+      console.error('Sarvam AI call error:', err);
+      setDynamicMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'assistant',
+          text: 'I encountered a temporary connection issue. You can continue using the options below or try typing again.',
+        },
+      ]);
+    } finally {
+      setIsAiThinking(false);
+    }
+  };
+
+  // Live Loan numbers calculation (deterministic JS utility functions)
   const interestRate = 14;
   const computedEmi = calculateEMI(capturedAmount, interestRate, capturedTenure);
   const computedTotalRepayment = calculateTotalRepayment(computedEmi, capturedTenure);
@@ -117,7 +208,7 @@ export default function ChatScreen() {
     try {
       await saveFinancialJourney(journeyData);
     } catch (error) {
-      console.error("Failed to save financial journey to Firestore:", error);
+      console.error('Failed to save financial journey to Firestore:', error);
     }
 
     // ALWAYS navigate after the save attempt whether it succeeds or fails
@@ -126,7 +217,7 @@ export default function ChatScreen() {
 
   const font = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-  // Category options lists ensuring clean naming
+  // Category options lists
   const loanOptions = [
     'Education Loan',
     'Personal Loan',
@@ -177,11 +268,11 @@ export default function ChatScreen() {
             transition: 'all 0.15s ease',
             flexShrink: 0,
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.background = '#002970';
             e.currentTarget.style.color = '#ffffff';
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.background = '#EEF4FB';
             e.currentTarget.style.color = '#002970';
           }}
@@ -190,10 +281,10 @@ export default function ChatScreen() {
         </button>
 
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#002970' }}>FinInsight AI Assistant</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#002970' }}>FinInsight Sarvam AI Assistant</div>
           <div style={{ fontSize: 9, color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontWeight: 600, marginTop: 1 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#16A34A' }} />
-            <span>Active Assistant</span>
+            <span>sarvam-105b Active</span>
           </div>
         </div>
 
@@ -207,7 +298,7 @@ export default function ChatScreen() {
 
         {/* Step 1: Initial AI Greeting */}
         <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
-          Hello Rahul 👋 I'm your AI financial assistant. Let's personalize your option!
+          Hello Rahul 👋 I'm your AI financial assistant powered by Sarvam AI. Tell me your requirement or select an option below!
         </div>
 
         <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 14px', maxWidth: '85%', border: '1px solid #E8EFF7', fontSize: 13, color: '#002970', lineHeight: 1.45 }}>
@@ -297,6 +388,39 @@ export default function ChatScreen() {
         {chatStep > 3 && (
           <div style={{ alignSelf: 'flex-end', background: '#002970', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '8px 14px', maxWidth: '80%', fontSize: 13, fontWeight: 600 }}>
             Tenure: {capturedTenure} Months
+          </div>
+        )}
+
+        {/* Render dynamic Sarvam AI conversation messages */}
+        {dynamicMessages.map((m) => (
+          <div
+            key={m.id}
+            style={{
+              alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
+              background: m.sender === 'user' ? '#002970' : '#ffffff',
+              color: m.sender === 'user' ? '#ffffff' : '#002970',
+              borderRadius: m.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+              padding: '12px 14px',
+              maxWidth: '85%',
+              border: m.sender === 'user' ? 'none' : '1px solid #E8EFF7',
+              fontSize: 13,
+              lineHeight: 1.45,
+              fontWeight: m.sender === 'user' ? 600 : 400,
+            }}
+          >
+            {m.text}
+          </div>
+        ))}
+
+        {/* Sarvam AI Typing Indicator */}
+        {isAiThinking && (
+          <div style={{ alignSelf: 'flex-start', background: '#ffffff', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', border: '1px solid #E8EFF7', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0s' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.2s' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00A8FF', animation: 'bounce 1s infinite 0.4s' }} />
+            </div>
+            <span style={{ fontSize: 12, color: '#5F6B7A', fontWeight: 500 }}>Sarvam AI is analyzing your financial details...</span>
           </div>
         )}
 
@@ -420,6 +544,64 @@ export default function ChatScreen() {
 
         <div ref={chatEndRef} />
       </div>
+
+      {/* Chat Text Input Bar for Sarvam AI Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSendMessage();
+        }}
+        style={{
+          padding: '10px 14px',
+          background: '#ffffff',
+          borderTop: '1px solid #E8EFF7',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flexShrink: 0,
+        }}
+      >
+        <input
+          type="text"
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          placeholder="Ask AI or type details (e.g. 5 lakh for car)..."
+          disabled={isAiThinking}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 24,
+            border: '1px solid #D0E8FB',
+            background: '#F5F8FC',
+            fontSize: 13,
+            outline: 'none',
+            color: '#002970',
+            fontFamily: font,
+          }}
+        />
+        <button
+          type="submit"
+          disabled={!inputMessage.trim() || isAiThinking}
+          title="Send message"
+          aria-label="Send message"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            background: !inputMessage.trim() || isAiThinking ? '#EEF4FB' : 'linear-gradient(90deg, #002970 0%, #004AAD 100%)',
+            color: !inputMessage.trim() || isAiThinking ? '#8A9BB0' : '#ffffff',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: !inputMessage.trim() || isAiThinking ? 'default' : 'pointer',
+            flexShrink: 0,
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <ArrowRightIcon />
+        </button>
+      </form>
 
       <BottomNav />
     </>
