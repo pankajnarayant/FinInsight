@@ -9,6 +9,7 @@ import DetailsListCard from '../components/DetailsListCard';
 import { useFinInsight } from '../context/FinInsightContext';
 import { saveFinancialJourney } from '../services/firestore';
 import { analyzeFinancialMessage } from '../services/aiService';
+import { getFastPathResponse } from '../utils/chatFastPath';
 import {
   calculateEMI,
   calculateTotalRepayment,
@@ -103,6 +104,17 @@ export default function ChatScreen() {
     // Append user message to dynamic conversation stream
     const userMsgObj = { id: Date.now(), sender: 'user', text: trimmedText };
     setDynamicMessages((prev) => [...prev, userMsgObj]);
+
+    // Check fast-path local response BEFORE showing loader or calling Sarvam AI
+    const fastPathReply = getFastPathResponse(trimmedText);
+    if (fastPathReply) {
+      setDynamicMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'assistant', text: fastPathReply },
+      ]);
+      return;
+    }
+
     setIsAiThinking(true);
 
     try {
